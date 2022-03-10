@@ -19,57 +19,70 @@ func (cs ClientState) CheckHeaderAndUpdateState(
 	ctx sdk.Context, cdc codec.BinaryCodec, clientStore sdk.KVStore,
 	header exported.Header,
 ) (exported.ClientState, exported.ConsensusState, error) {
-	smHeader, ok := header.(*Header)
-	if !ok {
-		return nil, nil, sdkerrors.Wrapf(
-			clienttypes.ErrInvalidHeader, "header type %T, expected  %T", header, &Header{},
-		)
-	}
-
-	if err := checkHeader(cdc, &cs, smHeader); err != nil {
+	if err := cs.VerifyHeader(cdc, header); err != nil {
 		return nil, nil, err
 	}
 
-	clientState, consensusState := update(&cs, smHeader)
-	return clientState, consensusState, nil
+	// TODO: #878 - Remove in PR 3 when changing: update -> UpdateState
+	if h, ok := header.(*Header); ok {
+		clientState, consensusState := update(&cs, h)
+		return clientState, consensusState, nil
+	}
+
+	return nil, nil, nil
 }
 
-// checkHeader checks if the Solo Machine update signature is valid.
-func checkHeader(cdc codec.BinaryCodec, clientState *ClientState, header *Header) error {
-	// assert update sequence is current sequence
-	if header.Sequence != clientState.Sequence {
-		return sdkerrors.Wrapf(
-			clienttypes.ErrInvalidHeader,
-			"header sequence does not match the client state sequence (%d != %d)", header.Sequence, clientState.Sequence,
-		)
-	}
+// VerifyHeader checks if the Solo Machine update signature is valid.
+func (cs ClientState) VerifyHeader(cdc codec.BinaryCodec, header exported.Header) error {
+	switch header := header.(type) {
+	case *Header:
+		// assert update sequence is current sequence
+		if header.Sequence != cs.Sequence {
+			return sdkerrors.Wrapf(
+				clienttypes.ErrInvalidHeader,
+				"header sequence does not match the client state sequence (%d != %d)", header.Sequence, cs.Sequence,
+			)
+		}
 
-	// assert update timestamp is not less than current consensus state timestamp
-	if header.Timestamp < clientState.ConsensusState.Timestamp {
-		return sdkerrors.Wrapf(
-			clienttypes.ErrInvalidHeader,
-			"header timestamp is less than to the consensus state timestamp (%d < %d)", header.Timestamp, clientState.ConsensusState.Timestamp,
-		)
-	}
+		// assert update timestamp is not less than current consensus state timestamp
+		if header.Timestamp < cs.ConsensusState.Timestamp {
+			return sdkerrors.Wrapf(
+				clienttypes.ErrInvalidHeader,
+				"header timestamp is less than to the consensus state timestamp (%d < %d)", header.Timestamp, cs.ConsensusState.Timestamp,
+			)
+		}
 
-	// assert currently registered public key signed over the new public key with correct sequence
-	data, err := HeaderSignBytes(cdc, header)
-	if err != nil {
-		return err
-	}
+		// assert currently registered public key signed over the new public key with correct sequence
+		data, err := HeaderSignBytes(cdc, header)
+		if err != nil {
+			return err
+		}
 
-	sigData, err := UnmarshalSignatureData(cdc, header.Signature)
-	if err != nil {
-		return err
-	}
+		sigData, err := UnmarshalSignatureData(cdc, header.Signature)
+		if err != nil {
+			return err
+		}
 
-	publicKey, err := clientState.ConsensusState.GetPubKey()
-	if err != nil {
-		return err
-	}
+		publicKey, err := cs.ConsensusState.GetPubKey()
+		if err != nil {
+			return err
+		}
 
-	if err := VerifySignature(publicKey, data, sigData); err != nil {
-		return sdkerrors.Wrap(ErrInvalidHeader, err.Error())
+		if err := VerifySignature(publicKey, data, sigData); err != nil {
+			return sdkerrors.Wrap(ErrInvalidHeader, err.Error())
+		}
+	case *DuplicateSignatures:
+		// verify first signature
+		if err := verifySignatureAndData(cdc, cs, header, header.SignatureOne); err != nil {
+			return sdkerrors.Wrap(err, "failed to verify signature one")
+		}
+
+		// verify second signature
+		if err := verifySignatureAndData(cdc, cs, header, header.SignatureTwo); err != nil {
+			return sdkerrors.Wrap(err, "failed to verify signature two")
+		}
+	default:
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidType, "unexpected type for header: %s", header)
 	}
 
 	return nil
