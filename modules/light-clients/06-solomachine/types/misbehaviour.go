@@ -27,7 +27,7 @@ func (ds DuplicateSignatures) Type() string {
 	return exported.TypeClientMisbehaviour
 }
 
-// GetHeight implements theh exported.Header interface
+// GetHeight implements the exported.Header interface
 // TODO: Remove after GetHeight() is removed from Header interface.
 func (ds DuplicateSignatures) GetHeight() exported.Height {
 	return nil
