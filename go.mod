@@ -142,3 +142,5 @@ require (
 	nhooyr.io/websocket v1.8.6 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
+
+replace github.com/cosmos/cosmos-sdk => github.com/lidofinance/cosmos-sdk v0.0.0-20220328091729-a37306c5297b
