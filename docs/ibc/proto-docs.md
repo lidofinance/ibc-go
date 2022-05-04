@@ -2048,9 +2048,9 @@ ResponseResultType defines the possible outcomes of the execution of a message
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| RESPONSE_RESULT_UNSPECIFIED | 0 | Default zero value enumeration |
-| RESPONSE_RESULT_NOOP | 1 | The message did not call the IBC application callbacks (because, for example, the packet had already been relayed) |
-| RESPONSE_RESULT_SUCCESS | 2 | The message was executed successfully |
+| RESPONSE_RESULT_TYPE_UNSPECIFIED | 0 | Default zero value enumeration |
+| RESPONSE_RESULT_TYPE_NOOP | 1 | The message did not call the IBC application callbacks (because, for example, the packet had already been relayed) |
+| RESPONSE_RESULT_TYPE_SUCCESS | 2 | The message was executed successfully |
 
 
  <!-- end enums -->
@@ -3965,6 +3965,8 @@ ConsensusState defines the consensus state from Tendermint.
 | `timestamp` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | timestamp that corresponds to the block height in which the ConsensusState was stored. |
 | `root` | [ibc.core.commitment.v1.MerkleRoot](#ibc.core.commitment.v1.MerkleRoot) |  | commitment root (i.e app hash) |
 | `next_validators_hash` | [bytes](#bytes) |  |  |
+| `data_hash` | [ibc.core.commitment.v1.MerkleRoot](#ibc.core.commitment.v1.MerkleRoot) |  |  |
+| `last_results_hash` | [ibc.core.commitment.v1.MerkleRoot](#ibc.core.commitment.v1.MerkleRoot) |  |  |
 
 
 

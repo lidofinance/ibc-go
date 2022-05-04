@@ -282,9 +282,11 @@ func (chain *TestChain) NextBlock() {
 
 	// increment the current header
 	chain.CurrentHeader = tmproto.Header{
-		ChainID: chain.ChainID,
-		Height:  chain.App.LastBlockHeight() + 1,
-		AppHash: chain.App.LastCommitID().Hash,
+		ChainID:         chain.ChainID,
+		Height:          chain.App.LastBlockHeight() + 1,
+		AppHash:         chain.App.LastCommitID().Hash,
+		DataHash:        chain.CurrentTMClientHeader().Header.DataHash,
+		LastResultsHash: chain.CurrentTMClientHeader().Header.LastResultsHash,
 		// NOTE: the time is increased by the coordinator to maintain time synchrony amongst
 		// chains.
 		Time:               chain.CurrentHeader.Time,

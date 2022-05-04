@@ -73,6 +73,9 @@ message ConsensusState {
     (gogoproto.casttype) = "github.com/tendermint/tendermint/libs/bytes.HexBytes",
     (gogoproto.moretags) = "yaml:\"next_validators_hash\""
   ];
+
+  ibc.core.commitment.v1.MerkleRoot data_hash         = 4 [(gogoproto.nullable) = false];
+  ibc.core.commitment.v1.MerkleRoot last_results_hash = 5 [(gogoproto.nullable) = false];
 }
 
 // Misbehaviour is a wrapper over two conflicting Headers
